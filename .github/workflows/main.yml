@@ -20,7 +20,7 @@ jobs:
           echo "Latest pre-release: $LATEST_PRE_RELEASE"
 
           # Find ONLY the legit "Odin" jar (EXCLUDE "OdinClient")
-          ASSET_URL=$(curl -s https://api.github.com/repos/odtheking/Odin/releases | jq -r '[.[] | select(.prerelease == true)][0].assets[] | select(.name | endswith(".jar") and contains("Odin-") and contains("OdinClient") | not) | .browser_download_url')
+          ASSET_URL=$(curl -s https://api.github.com/repos/odtheking/Odin/releases | jq -r '[.[] | select(.prerelease == true)][0].assets[] | select(.name | endswith(".jar") and contains("Odin-") and (contains("OdinClient") | not)) | .browser_download_url | select(length > 0)')
 
           if [ -z "$ASSET_URL" ]; then
             echo "No legit Odin .jar file found in latest pre-release"
