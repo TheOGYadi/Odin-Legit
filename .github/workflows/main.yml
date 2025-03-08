@@ -1,0 +1,43 @@
+name: Sync Odin Legit Pre-Releases
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs once a day at midnight
+  workflow_dispatch: # Lets you run manually
+
+jobs:
+  sync-pre-releases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your repo
+        uses: actions/checkout@v4
+
+      - name: Get latest pre-release
+        run: |
+          # Get the latest pre-release info
+          LATEST_PRE_RELEASE=$(curl -s https://api.github.com/repos/odtheking/Odin/releases | jq -r '[.[] | select(.prerelease == true)][0].tag_name')
+          echo "Latest pre-release: $LATEST_PRE_RELEASE"
+
+          # Find the right .jar file (exclude "odinclient")
+          ASSET_URL=$(curl -s https://api.github.com/repos/odtheking/Odin/releases | jq -r '[.[] | select(.prerelease == true)][0].assets[] | select(.name | endswith(".jar") and contains("odinclient") | not) | .browser_download_url')
+
+          if [ -z "$ASSET_URL" ]; then
+            echo "No legit .jar file found in latest pre-release"
+            exit 0
+          fi
+
+          # Download the legit .jar if it's not already there
+          wget -N "$ASSET_URL"
+
+      - name: Commit and push if new pre-release
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "your-email@example.com"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Odin Legit Pre-Release - $(date)"
+            git push
+          else
+            echo "No new pre-release to commit"
+          fi
